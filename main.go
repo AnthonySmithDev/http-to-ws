@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gookit/color"
 	"github.com/rs/zerolog"
 	"github.com/urfave/cli/v2"
 	"nhooyr.io/websocket"
@@ -44,6 +45,8 @@ func main() {
 	}
 }
 
+const TimeSleep = time.Second * 5
+
 func run(wsURL, httpHost string) error {
 
 	interrupt := make(chan os.Signal, 1)
@@ -56,7 +59,7 @@ func run(wsURL, httpHost string) error {
 		conn, _, err := websocket.Dial(ctx, wsURL, nil)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Websocket not connected")
-			time.Sleep(time.Second * 5)
+			time.Sleep(TimeSleep)
 			continue
 		}
 		defer conn.CloseNow()
@@ -69,11 +72,11 @@ func run(wsURL, httpHost string) error {
 
 		server.Post("/", func(c *fiber.Ctx) error {
 			data := c.Body()
-			err := conn.Write(ctx, websocket.MessageText, data)
+			err := conn.Write(context.Background(), websocket.MessageText, data)
 			if err != nil {
 				log.Error().Err(err).Msg("Websocket Write")
 			}
-			log.Info().Msg(string(data))
+			color.Greenln(string(data))
 			return nil
 		})
 
@@ -82,18 +85,18 @@ func run(wsURL, httpHost string) error {
 			defer close(done)
 
 			for {
-				messageType, data, err := conn.Read(ctx)
+				messageType, data, err := conn.Read(context.Background())
 				if err != nil {
 					if websocket.CloseStatus(err) != websocket.StatusNormalClosure {
 						log.Error().Msg("Websocket disconnected")
 					} else {
 						log.Error().Err(err).Msg("Websocket Read")
 					}
-					time.Sleep(time.Second * 5)
+					time.Sleep(TimeSleep)
 					break
 				}
 				if messageType == websocket.MessageText {
-					log.Debug().Msg(string(data))
+					color.Cyanln(string(data))
 				}
 			}
 		}()
@@ -101,7 +104,7 @@ func run(wsURL, httpHost string) error {
 		go func() {
 			if err := server.Listen(httpHost); err != nil {
 				log.Error().Err(err).Msg("Server Listen")
-				time.Sleep(time.Second * 5)
+				time.Sleep(TimeSleep)
 			}
 		}()
 
