@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -26,9 +27,16 @@ func main() {
 
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:  "host",
-				Value: "0.0.0.0:9999",
-				Usage: "host for server",
+				Name:    "host",
+				Value:   "0.0.0.0",
+				Usage:   "host for server",
+				Aliases: []string{"h"},
+			},
+			&cli.StringFlag{
+				Name:    "port",
+				Value:   "9999",
+				Usage:   "port for server",
+				Aliases: []string{"p"},
 			},
 		},
 		Action: func(cCtx *cli.Context) error {
@@ -36,7 +44,8 @@ func main() {
 			if wsURL == "" {
 				return errors.New("No websocket url specified")
 			}
-			return run(wsURL, cCtx.String("host"))
+			addr := fmt.Sprint(cCtx.String("host"), ":", cCtx.String("port"))
+			return run(wsURL, addr)
 		},
 	}
 
@@ -47,7 +56,7 @@ func main() {
 
 const TimeSleep = time.Second * 5
 
-func run(wsURL, httpHost string) error {
+func run(wsURL, addr string) error {
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
@@ -102,7 +111,7 @@ func run(wsURL, httpHost string) error {
 		}()
 
 		go func() {
-			if err := server.Listen(httpHost); err != nil {
+			if err := server.Listen(addr); err != nil {
 				log.Error().Err(err).Msg("Server Listen")
 				time.Sleep(TimeSleep)
 			}
