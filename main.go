@@ -27,16 +27,14 @@ func main() {
 
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:    "host",
-				Value:   "0.0.0.0",
-				Usage:   "host for server",
-				Aliases: []string{"h"},
+				Name:  "host",
+				Value: "0.0.0.0",
+				Usage: "host for server",
 			},
 			&cli.StringFlag{
-				Name:    "port",
-				Value:   "9999",
-				Usage:   "port for server",
-				Aliases: []string{"p"},
+				Name:  "port",
+				Value: "9999",
+				Usage: "port for server",
 			},
 		},
 		Action: func(cCtx *cli.Context) error {
